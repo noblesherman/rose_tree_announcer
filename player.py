@@ -33,7 +33,12 @@ class AudioPlayer:
         if platform.system() == 'Darwin' and shutil.which('afplay'):
             return ['afplay', str(path)]
         if shutil.which('mpv'):
-            return ['mpv','--no-video','--really-quiet',str(path)]
+            # This is a single local announcement, not a media player session.
+            # Avoid mpv's cache/read-ahead and user configuration on the Pi.
+            return [
+                'mpv', '--no-video', '--really-quiet', '--no-config',
+                '--cache=no', '--demuxer-readahead-secs=0', str(path),
+            ]
         if path.suffix.lower() == '.mp3' and shutil.which('mpg123'):
             return ['mpg123','-q',str(path)]
         if path.suffix.lower() == '.wav' and shutil.which('aplay'):

@@ -1,0 +1,8 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+data/secret.key
+data/history.json
+media/.upload_*
+media/.tmp_*

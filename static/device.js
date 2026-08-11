@@ -1,4 +1,4 @@
-/* Device touchscreen behaviour: press a tile, watch the footer, stay in sync. */
+/* Device touchscreen behaviour. Kept deliberately quiet for the Pi kiosk. */
 
 const clockEl = document.getElementById('clock');
 const dayEl = document.getElementById('day');
@@ -13,6 +13,7 @@ const tiles = Array.from(document.querySelectorAll('.tile'));
 
 let flashTimer = null;
 let holdMessageUntil = 0;
+let lastStateSignature = '';
 
 /* Clock ------------------------------------------------------------------ */
 
@@ -32,17 +33,6 @@ function flash(message, tone) {
   flashEl.classList.add('is-shown');
   clearTimeout(flashTimer);
   flashTimer = setTimeout(() => flashEl.classList.remove('is-shown'), 2600);
-}
-
-/* Press feedback --------------------------------------------------------- */
-
-function hit(tile, event) {
-  const box = tile.getBoundingClientRect();
-  const point = event.touches ? event.touches[0] : event;
-  tile.style.setProperty('--x', `${(((point.clientX - box.left) / box.width) * 100).toFixed(1)}%`);
-  tile.style.setProperty('--y', `${(((point.clientY - box.top) / box.height) * 100).toFixed(1)}%`);
-  tile.classList.add('is-hit');
-  requestAnimationFrame(() => requestAnimationFrame(() => tile.classList.remove('is-hit')));
 }
 
 /* Requests --------------------------------------------------------------- */
@@ -90,6 +80,9 @@ function applyPlayback(playback) {
 }
 
 function applyState(state) {
+  const signature = JSON.stringify({ tracks: state.tracks, tonight: state.tonight });
+  if (signature === lastStateSignature) return;
+  lastStateSignature = signature;
   state.tracks.forEach((track) => {
     const tile = tiles.find((item) => item.dataset.track === track.number);
     if (!tile) return;
@@ -139,7 +132,6 @@ async function refresh() {
 /* Wiring ----------------------------------------------------------------- */
 
 tiles.forEach((tile) => {
-  tile.addEventListener('pointerdown', (event) => hit(tile, event));
   tile.addEventListener('click', () => send(`/api/play/${tile.dataset.track}`));
 });
 
@@ -152,4 +144,6 @@ document.addEventListener('visibilitychange', () => {
 tick();
 refresh();
 setInterval(tick, 1000);
-setInterval(refresh, 1000);
+// Playback changes are returned immediately after a local tap. A slower
+// refresh catches GPIO presses and admin edits without a constant render loop.
+setInterval(refresh, 3000);

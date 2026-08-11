@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically update DS3231 after NTP synchronization
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=rose-tree-rtc-sync.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,21 @@
+[Unit]
+Description=Rose Tree announcement server
+After=local-fs.target sound.target
+Wants=sound.target
+
+[Service]
+Type=simple
+User=rosetreepark
+Group=rosetreepark
+WorkingDirectory=__PROJECT_DIR__
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/rose-tree-announcer.env
+ExecStart=__PROJECT_DIR__/.venv/bin/gunicorn --workers 1 --threads 4 --worker-tmp-dir /dev/shm --bind 0.0.0.0:5001 --access-logfile - --error-logfile - app:app
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=8
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

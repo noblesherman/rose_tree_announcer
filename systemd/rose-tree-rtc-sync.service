@@ -1,0 +1,11 @@
+[Unit]
+Description=Write synchronized system time to DS3231 RTC
+After=time-sync.target
+Wants=time-sync.target
+ConditionPathExists=/dev/rtc0
+
+[Service]
+Type=oneshot
+# Never overwrite a good RTC from an unsynchronized, offline system clock.
+ExecCondition=/bin/sh -c '/usr/bin/timedatectl show -p NTPSynchronized --value | /usr/bin/grep -qx yes'
+ExecStart=/usr/sbin/hwclock --systohc --utc

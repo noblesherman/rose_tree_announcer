@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import atexit
 import copy
 import hmac
 import json
@@ -910,10 +911,10 @@ def api_status():
     )
 
 
-# Autoplay arming and volume are operational controls, not content changes, so the
-# touchscreen can reach them without a keyboard. Both are written to the activity log.
+# Autoplay arming and volume affect the appliance, so they remain admin-only.
 
 @app.post('/api/autoplay/toggle')
+@login_required
 def api_toggle_autoplay():
     payload = request.get_json(silent=True) or {}
     cfg = load_config()
@@ -929,6 +930,7 @@ def api_toggle_autoplay():
 
 
 @app.post('/api/volume')
+@login_required
 def api_volume():
     payload = request.get_json(silent=True) or {}
     try:
@@ -1128,6 +1130,12 @@ def start_workers():
 
 
 hardware, autoplayer = start_workers()
+
+
+@atexit.register
+def stop_audio_on_exit():
+    """Do not leave a child player running when systemd restarts the server."""
+    player.stop()
 
 if __name__ == '__main__':
     # Debug off by default: the Werkzeug debugger exposes a shell to anyone on the network.

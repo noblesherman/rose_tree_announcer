@@ -1,0 +1,17 @@
+#!/bin/sh
+# Used by rose-tree-kiosk.service. Keep this launcher portable across current
+# Raspberry Pi OS images: Cog's DRM option is present on some, not all builds.
+set -eu
+
+URL="http://127.0.0.1:5001/"
+
+if ! command -v cog >/dev/null 2>&1; then
+  echo "Cog is not installed. Re-run scripts/install_pi.sh." >&2
+  exit 127
+fi
+
+if cog --help 2>&1 | grep -q -- '--platform'; then
+  exec cog --platform=drm "$URL"
+fi
+
+exec cog "$URL"

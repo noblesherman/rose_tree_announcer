@@ -8,7 +8,7 @@ body {
 
 body {
   user-select: none;
-  cursor: default;
+  cursor: none;
 }
 
 .screen {
@@ -131,8 +131,6 @@ body {
   background: var(--surface);
   text-align: left;
   overflow: hidden;
-  transition: transform var(--fast) var(--ease), background var(--mid) var(--ease),
-    border-color var(--mid) var(--ease);
 }
 
 .tile--wide {
@@ -140,7 +138,6 @@ body {
 }
 
 .tile:active {
-  transform: scale(0.982);
   background: var(--surface-hi);
 }
 
@@ -152,7 +149,6 @@ body {
   font-size: clamp(13px, 2.6vmin, 17px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  transition: color var(--mid) var(--ease);
 }
 
 .tile__name {
@@ -195,22 +191,6 @@ body {
   color: var(--accent);
 }
 
-/* Sweep that runs across a tile the moment it is pressed */
-.tile::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.11), transparent 62%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--slow) var(--ease);
-}
-
-.tile.is-hit::after {
-  opacity: 1;
-  transition: none;
-}
-
 /* Footer ----------------------------------------------------------------- */
 
 .bottom {
@@ -231,7 +211,6 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
   background: var(--surface);
-  transition: border-color var(--mid) var(--ease), background var(--mid) var(--ease);
 }
 
 .now[data-state="playing"] {
@@ -263,7 +242,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color var(--mid) var(--ease);
 }
 
 .now[data-state="idle"] .now__text {
@@ -296,18 +274,12 @@ body {
   font-weight: 500;
   letter-spacing: 0.04em;
   flex: none;
-  transition: transform var(--fast) var(--ease), color var(--mid) var(--ease),
-    border-color var(--mid) var(--ease), background var(--mid) var(--ease);
 }
 
 .stop[data-live="true"] {
   border-color: rgba(216, 117, 106, 0.5);
   background: var(--danger-soft);
   color: var(--danger);
-}
-
-.stop:active {
-  transform: scale(0.97);
 }
 
 .stop__glyph {
