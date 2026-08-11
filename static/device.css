@@ -1,0 +1,360 @@
+/* Device touchscreen — fits any 7" panel from 800x480 to 1024x600, never scrolls */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  user-select: none;
+  cursor: default;
+}
+
+.screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(8px, 1.8vmin, 14px);
+  height: 100dvh;
+  padding: clamp(10px, 2.2vmin, 18px);
+}
+
+/* Header ----------------------------------------------------------------- */
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: clamp(10px, 2vmin, 18px);
+}
+
+.clock {
+  font-size: clamp(24px, 6vmin, 38px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.top__day {
+  color: var(--text-dim);
+  font-size: clamp(11px, 2.2vmin, 14px);
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.top__day b {
+  display: block;
+  color: var(--text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top__spacer {
+  flex: 1;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 42vw;
+  padding: clamp(5px, 1.1vmin, 8px) clamp(9px, 1.8vmin, 13px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: clamp(11px, 2.1vmin, 13px);
+  transition: border-color var(--mid) var(--ease), color var(--mid) var(--ease);
+}
+
+.pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill[data-state="playing"] {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.pill[data-state="error"] {
+  border-color: rgba(216, 117, 106, 0.45);
+  color: var(--danger);
+}
+
+.gear {
+  display: grid;
+  place-items: center;
+  width: clamp(32px, 6.4vmin, 42px);
+  height: clamp(32px, 6.4vmin, 42px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-faint);
+  flex: none;
+  transition: color var(--fast) var(--ease), border-color var(--fast) var(--ease);
+}
+
+.gear:active {
+  color: var(--text);
+  border-color: var(--accent-line);
+}
+
+.gear svg {
+  width: 55%;
+  height: 55%;
+}
+
+/* Tiles ------------------------------------------------------------------ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: clamp(8px, 1.8vmin, 14px);
+  min-height: 0;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: clamp(2px, 0.8vmin, 6px);
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(10px, 2.4vmin, 20px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  text-align: left;
+  overflow: hidden;
+  transition: transform var(--fast) var(--ease), background var(--mid) var(--ease),
+    border-color var(--mid) var(--ease);
+}
+
+.tile--wide {
+  grid-column: span 2;
+}
+
+.tile:active {
+  transform: scale(0.982);
+  background: var(--surface-hi);
+}
+
+.tile__num {
+  position: absolute;
+  top: clamp(9px, 2vmin, 16px);
+  right: clamp(11px, 2.4vmin, 20px);
+  color: var(--text-faint);
+  font-size: clamp(13px, 2.6vmin, 17px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--mid) var(--ease);
+}
+
+.tile__name {
+  padding-right: clamp(18px, 4vmin, 30px);
+  font-size: clamp(15px, 3.4vmin, 23px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile__sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: clamp(11px, 2.2vmin, 14px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tile[data-ready="false"] .tile__name {
+  color: var(--text-dim);
+}
+
+.tile[data-ready="false"] .tile__sub {
+  color: var(--text-faint);
+}
+
+.tile[data-active="true"] {
+  border-color: var(--accent-line);
+  background: linear-gradient(180deg, var(--accent-soft), transparent 70%), var(--surface-hi);
+}
+
+.tile[data-active="true"] .tile__num,
+.tile[data-active="true"] .tile__sub {
+  color: var(--accent);
+}
+
+/* Sweep that runs across a tile the moment it is pressed */
+.tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.11), transparent 62%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--slow) var(--ease);
+}
+
+.tile.is-hit::after {
+  opacity: 1;
+  transition: none;
+}
+
+/* Footer ----------------------------------------------------------------- */
+
+.bottom {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.8vmin, 14px);
+  min-width: 0;
+}
+
+.now {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.6vmin, 12px);
+  flex: 1;
+  min-width: 0;
+  height: clamp(44px, 9vmin, 60px);
+  padding: 0 clamp(12px, 2.4vmin, 20px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  transition: border-color var(--mid) var(--ease), background var(--mid) var(--ease);
+}
+
+.now[data-state="playing"] {
+  border-color: var(--accent-line);
+  background: linear-gradient(90deg, var(--accent-soft), transparent 55%), var(--surface);
+}
+
+.now[data-state="error"] {
+  border-color: rgba(216, 117, 106, 0.45);
+  background: linear-gradient(90deg, var(--danger-soft), transparent 55%), var(--surface);
+}
+
+.now__bars {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: width var(--mid) var(--ease), opacity var(--mid) var(--ease);
+}
+
+.now[data-state="playing"] .now__bars {
+  width: 14px;
+  opacity: 1;
+}
+
+.now__text {
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(12px, 2.5vmin, 16px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--mid) var(--ease);
+}
+
+.now[data-state="idle"] .now__text {
+  color: var(--text-dim);
+}
+
+.now[data-state="error"] .now__text {
+  color: var(--danger);
+}
+
+.now__host {
+  color: var(--text-faint);
+  font-size: clamp(10px, 2vmin, 12.5px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: clamp(44px, 9vmin, 60px);
+  padding: 0 clamp(18px, 3.6vmin, 32px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text-faint);
+  font-size: clamp(12px, 2.5vmin, 16px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  flex: none;
+  transition: transform var(--fast) var(--ease), color var(--mid) var(--ease),
+    border-color var(--mid) var(--ease), background var(--mid) var(--ease);
+}
+
+.stop[data-live="true"] {
+  border-color: rgba(216, 117, 106, 0.5);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.stop:active {
+  transform: scale(0.97);
+}
+
+.stop__glyph {
+  width: clamp(9px, 1.9vmin, 12px);
+  height: clamp(9px, 1.9vmin, 12px);
+  border-radius: 3px;
+  background: currentColor;
+}
+
+/* Toast ------------------------------------------------------------------ */
+
+.flash {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(70px, 14vmin, 96px);
+  max-width: 80vw;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-hi);
+  font-size: clamp(12px, 2.3vmin, 15px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transform: translate(-50%, 10px);
+  pointer-events: none;
+  transition: opacity var(--mid) var(--ease), transform var(--mid) var(--ease);
+}
+
+.flash.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.flash[data-tone="error"] {
+  border-color: rgba(216, 117, 106, 0.5);
+  color: var(--danger);
+}
+
+/* Very short panels: drop the secondary line so nothing clips */
+@media (max-height: 440px) {
+  .tile__sub {
+    display: none;
+  }
+
+  .tile--wide .tile__sub {
+    display: flex;
+  }
+}

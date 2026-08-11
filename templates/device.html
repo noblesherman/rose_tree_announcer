@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>{{ state.device_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='device.css') }}">
+</head>
+<body>
+  <div class="screen">
+
+    <header class="top">
+      <div class="clock tabular" id="clock">--:--</div>
+      <div class="top__day">
+        <b id="day">{{ state.today_pretty }}</b>
+        Rose Tree
+      </div>
+      <div class="top__spacer"></div>
+      <div class="pill" id="tonight-pill" data-state="idle">
+        <i class="dot" id="tonight-dot" data-state="{{ 'ready' if state.tonight.filename else '' }}"></i>
+        <span id="tonight-text">
+          {%- if state.tonight.band_name -%}
+            Tonight · {{ state.tonight.band_name }}
+          {%- elif state.tonight.scheduled -%}
+            Tonight · band scheduled
+          {%- else -%}
+            No band tonight
+          {%- endif -%}
+        </span>
+      </div>
+      <a class="gear" href="{{ url_for('admin') }}" aria-label="Open settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path>
+        </svg>
+      </a>
+    </header>
+
+    <main class="grid">
+      {% for track in state.tracks %}
+        <button
+          class="tile{{ ' tile--wide' if track.nightly }}"
+          data-track="{{ track.number }}"
+          data-ready="{{ 'true' if track.ready else 'false' }}"
+          data-active="false"
+        >
+          <span class="tile__num">{{ track.number }}</span>
+          <span class="tile__name" data-field="name">{{ track.name }}</span>
+          <span class="tile__sub" data-field="sub">
+            {%- if track.nightly -%}
+              {{ track.subtitle }}
+            {%- elif track.ready -%}
+              Ready
+            {%- else -%}
+              No audio yet
+            {%- endif -%}
+          </span>
+        </button>
+      {% endfor %}
+    </main>
+
+    <footer class="bottom">
+      <div class="now" id="now" data-state="idle">
+        <span class="now__bars"><span class="bars"><i></i><i></i><i></i><i></i></span></span>
+        <span class="now__text" id="now-text">Ready</span>
+        <span class="now__host">{{ address }}:5001</span>
+      </div>
+      <button class="stop" id="stop" data-live="false">
+        <span class="stop__glyph"></span>
+        Stop
+      </button>
+    </footer>
+
+  </div>
+
+  <div class="flash" id="flash" role="status" aria-live="polite"></div>
+
+  <script src="{{ url_for('static', filename='device.js') }}"></script>
+</body>
+</html>

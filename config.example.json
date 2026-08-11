@@ -1,0 +1,26 @@
+{
+  "device_name": "Rose Tree Announcement Player",
+  "tracks": {
+    "1": {
+      "name": "Welcome",
+      "filename": null
+    },
+    "2": {
+      "name": "Park Information",
+      "filename": null
+    },
+    "3": {
+      "name": "Sponsors",
+      "filename": null
+    },
+    "4": {
+      "name": "Tonight's Band",
+      "filename": null
+    },
+    "5": {
+      "name": "Final Announcement",
+      "filename": null
+    }
+  },
+  "nightly_band_schedule": {}
+}

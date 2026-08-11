@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Sign in · {{ device_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+</head>
+<body>
+  <div class="gate">
+    <form class="gate__card{{ ' shake' if error }}" method="post" autocomplete="off">
+      <div class="gate__mark">RT</div>
+      <h1>{{ device_name }}</h1>
+      <p>Enter the passcode to manage announcements.</p>
+      <input
+        class="input"
+        name="passcode"
+        type="password"
+        inputmode="numeric"
+        autocomplete="current-password"
+        placeholder="••••••"
+        autofocus
+        required
+      >
+      <button class="btn btn--accent" type="submit">Sign in</button>
+      {% if error %}<p class="gate__error">{{ error }}</p>{% endif %}
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>{{ state.device_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='console.css') }}">
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="head">
+      <div class="head__title">
+        <h1>{{ state.device_name }}</h1>
+        <p>{{ address }}:5001</p>
+      </div>
+      {% if protected %}
+        <form method="post" action="{{ url_for('logout') }}">
+          <button class="ghost" type="submit">Sign out</button>
+        </form>
+      {% endif %}
+    </header>
+
+    {% if not protected %}
+      <div class="notice">
+        <span>
+          Anyone on this network can change these settings.
+          Set <code>ADMIN_PASSCODE</code> on the Pi and restart to require a passcode.
+        </span>
+      </div>
+    {% endif %}
+
+    {% if state.generation_error %}
+      <div class="notice" id="generation-notice">
+        <span>{{ state.generation_error }} You can still upload audio files.</span>
+      </div>
+    {% endif %}
+
+    <section class="hero" id="hero" data-live="false">
+      <div class="hero__label">
+        <i class="dot" id="hero-dot"></i>
+        <span id="hero-when">Tonight · {{ state.today_pretty }}</span>
+      </div>
+      <p class="hero__band" id="hero-band" data-empty="true">—</p>
+      <div class="hero__row">
+        <button class="btn btn--accent" id="hero-play">Play announcement</button>
+        <button class="btn btn--quiet" id="hero-stop" disabled>Stop</button>
+        <span class="tag" id="hero-tag" hidden></span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section__head">
+        <h2>Band nights</h2>
+        <button class="btn btn--quiet" id="add-night">Add a night</button>
+      </div>
+      <div class="list" id="schedule-list"></div>
+    </section>
+
+    <section class="section">
+      <div class="section__head">
+        <h2>Buttons</h2>
+      </div>
+      <div class="list" id="track-list"></div>
+    </section>
+
+  </div>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <script id="initial-state" type="application/json">{{ state | tojson }}</script>
+  <script src="{{ url_for('static', filename='console.js') }}"></script>
+</body>
+</html>

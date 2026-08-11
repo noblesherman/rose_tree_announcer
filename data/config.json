@@ -1,0 +1,29 @@
+{
+  "device_name": "Rose Tree Announcement Player",
+  "volume": 75,
+  "autoplay_enabled": true,
+  "autoplay": [],
+  "tracks": {
+    "1": {
+      "name": "Welcome",
+      "filename": "track_1_MiniMax_2026-07-25_19_12_16_RTP.mp3"
+    },
+    "2": {
+      "name": "Park Information",
+      "filename": null
+    },
+    "3": {
+      "name": "Sponsors",
+      "filename": null
+    },
+    "4": {
+      "name": "Tonight's Band",
+      "filename": null
+    },
+    "5": {
+      "name": "Final Announcement",
+      "filename": null
+    }
+  },
+  "nightly_band_schedule": {}
+}

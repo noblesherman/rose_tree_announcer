@@ -1,0 +1,150 @@
+/* Rose Tree Announcer — shared tokens and reset */
+
+:root {
+  --bg: #100f0d;
+  --surface: #191714;
+  --surface-hi: #211e1a;
+  --line: #2c2823;
+  --line-soft: #232019;
+
+  --text: #f3efe8;
+  --text-dim: #a49d92;
+  --text-faint: #6f6960;
+
+  --accent: #d9a066;
+  --accent-soft: rgba(217, 160, 102, 0.14);
+  --accent-line: rgba(217, 160, 102, 0.42);
+
+  --ok: #85b98d;
+  --warn: #d9b166;
+  --danger: #d8756a;
+  --danger-soft: rgba(216, 117, 106, 0.13);
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  --ease: cubic-bezier(0.22, 0.85, 0.3, 1);
+  --fast: 140ms;
+  --mid: 220ms;
+  --slow: 380ms;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status dot ------------------------------------------------------------- */
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  flex: none;
+  transition: background var(--mid) var(--ease), box-shadow var(--mid) var(--ease);
+}
+
+.dot[data-state="ready"] {
+  background: var(--ok);
+}
+
+.dot[data-state="playing"] {
+  background: var(--accent);
+  animation: pulse 1.6s var(--ease) infinite;
+}
+
+.dot[data-state="error"] {
+  background: var(--danger);
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-soft); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+
+/* Playing bars ----------------------------------------------------------- */
+
+.bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.bars i {
+  display: block;
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  transform-origin: bottom;
+  animation: bob 900ms var(--ease) infinite;
+}
+
+.bars i:nth-child(2) { animation-delay: 150ms; }
+.bars i:nth-child(3) { animation-delay: 300ms; }
+.bars i:nth-child(4) { animation-delay: 450ms; }
+
+@keyframes bob {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
