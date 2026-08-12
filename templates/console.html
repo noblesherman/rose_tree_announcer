@@ -51,6 +51,43 @@
       </div>
     </section>
 
+    <section class="section autoplay" id="autoplay">
+      <div class="section__head">
+        <h2>Autoplay</h2>
+        <label class="switch" for="autoplay-enabled">
+          <input type="checkbox" id="autoplay-enabled">
+          <span class="switch__track" aria-hidden="true"></span>
+          <span class="switch__label" id="autoplay-enabled-label">On</span>
+        </label>
+      </div>
+      <div class="autoplay__next" id="autoplay-next" aria-live="polite"></div>
+      <div class="list" id="autoplay-list"></div>
+      <form class="autoplay__form" id="autoplay-form">
+        <div class="field">
+          <label for="autoplay-time">Play at</label>
+          <input class="input" id="autoplay-time" name="time" type="time" required>
+        </div>
+        <div class="field">
+          <label for="autoplay-track">Play</label>
+          <select class="input" id="autoplay-track" name="track" required></select>
+        </div>
+        <div class="field">
+          <label for="autoplay-repeat">Repeat</label>
+          <select class="input" id="autoplay-repeat" name="repeat">
+            <option value="daily">Every day</option>
+            <option value="weekdays">Weekdays</option>
+            <option value="weekends">Weekends</option>
+            <option value="once">One date</option>
+          </select>
+        </div>
+        <div class="field" id="autoplay-date-field" hidden>
+          <label for="autoplay-date">Date</label>
+          <input class="input" id="autoplay-date" name="date" type="date">
+        </div>
+        <button class="btn btn--accent" type="submit">Add autoplay time</button>
+      </form>
+    </section>
+
     <section class="section">
       <div class="section__head">
         <h2>Band nights</h2>

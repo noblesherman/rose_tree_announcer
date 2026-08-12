@@ -15,6 +15,16 @@ const heroWhen = document.getElementById('hero-when');
 const heroTag = document.getElementById('hero-tag');
 const heroPlay = document.getElementById('hero-play');
 const heroStop = document.getElementById('hero-stop');
+const autoplayList = document.getElementById('autoplay-list');
+const autoplayNext = document.getElementById('autoplay-next');
+const autoplayEnabled = document.getElementById('autoplay-enabled');
+const autoplayEnabledLabel = document.getElementById('autoplay-enabled-label');
+const autoplayForm = document.getElementById('autoplay-form');
+const autoplayTime = document.getElementById('autoplay-time');
+const autoplayTrack = document.getElementById('autoplay-track');
+const autoplayRepeat = document.getElementById('autoplay-repeat');
+const autoplayDateField = document.getElementById('autoplay-date-field');
+const autoplayDate = document.getElementById('autoplay-date');
 const preview = new Audio();
 
 /* Tiny DOM helper -------------------------------------------------------- */
@@ -395,6 +405,59 @@ function renderTracks() {
   })));
 }
 
+/* Autoplay --------------------------------------------------------------- */
+
+function nextUpText(next) {
+  if (!next) return 'No upcoming autoplay times.';
+  const day = next.today ? 'today' : 'next run';
+  return `Next: ${next.name} at ${next.time_label} ${day}.`;
+}
+
+function renderAutoplay() {
+  autoplayEnabled.checked = state.autoplay_enabled;
+  autoplayEnabledLabel.textContent = state.autoplay_enabled ? 'On' : 'Off';
+  autoplayNext.textContent = state.autoplay_enabled
+    ? nextUpText(state.next_up)
+    : 'Autoplay is off. Turn it on when you are ready.';
+
+  autoplayTrack.replaceChildren(...state.tracks.map((track) => el('option', {
+    value: track.number,
+    text: `Button ${track.number} · ${track.name}`,
+  })));
+
+  const rules = state.autoplay || [];
+  autoplayList.replaceChildren(...(rules.length
+    ? rules.map((rule) => {
+      const row = el('div', { class: 'autoplay__rule', dataDisabled: rule.enabled ? 'false' : 'true' }, [
+        el('div', { class: 'autoplay__rule-time', text: rule.time_label }),
+        el('div', { class: 'autoplay__rule-copy' }, [
+          el('div', { class: 'autoplay__rule-name', text: `Button ${rule.track} · ${rule.track_name || 'Unnamed button'}` }),
+          el('div', { class: 'autoplay__rule-repeat', text: rule.summary }),
+        ]),
+      ]);
+      const remove = el('button', {
+        class: 'btn btn--danger', type: 'button', text: 'Remove',
+        onclick: async (event) => {
+          const data = await run(event.currentTarget, `/api/autoplay/${rule.id}/delete`);
+          if (data.success) renderAutoplay();
+        },
+      });
+      row.append(remove);
+      return row;
+    })
+    : [el('p', { class: 'empty', text: 'No autoplay times yet. Add one below.' })]));
+}
+
+function updateAutoplayStatus(nextState) {
+  state.autoplay_enabled = nextState.autoplay_enabled;
+  state.next_up = nextState.next_up;
+  autoplayEnabled.checked = state.autoplay_enabled;
+  autoplayEnabledLabel.textContent = state.autoplay_enabled ? 'On' : 'Off';
+  autoplayNext.textContent = state.autoplay_enabled
+    ? nextUpText(state.next_up)
+    : 'Autoplay is off. Turn it on when you are ready.';
+}
+
 /* Tonight hero ----------------------------------------------------------- */
 
 function renderHero() {
@@ -429,6 +492,7 @@ function applyState(next) {
 
 function render() {
   renderHero();
+  renderAutoplay();
   renderSchedule();
   renderTracks();
 }
@@ -443,11 +507,48 @@ document.getElementById('add-night').addEventListener('click', () => {
 heroPlay.addEventListener('click', (event) => run(event.currentTarget, `/api/play/${state.nightly_number}`));
 heroStop.addEventListener('click', (event) => run(event.currentTarget, '/api/stop'));
 
+autoplayEnabled.addEventListener('change', async (event) => {
+  const data = await api('/api/autoplay/toggle', {
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled: event.currentTarget.checked }),
+  });
+  toast(data.message, data.success ? 'info' : 'error');
+  if (data.success && data.state) applyState(data.state);
+  else autoplayEnabled.checked = state.autoplay_enabled;
+});
+
+function updateAutoplayDate() {
+  const once = autoplayRepeat.value === 'once';
+  autoplayDateField.hidden = !once;
+  autoplayDate.required = once;
+}
+
+autoplayRepeat.addEventListener('change', updateAutoplayDate);
+autoplayForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const submit = autoplayForm.querySelector('[type="submit"]');
+  const data = await run(submit, '/api/autoplay', {
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      time: autoplayTime.value,
+      track: autoplayTrack.value,
+      repeat: autoplayRepeat.value,
+      date: autoplayDate.value,
+      enabled: true,
+    }),
+  });
+  if (data.success) {
+    autoplayForm.reset();
+    updateAutoplayDate();
+  }
+});
+
 async function syncPlayback() {
   try {
     const response = await fetch('/api/status');
     const data = await response.json();
     applyPlayback(data.playback);
+    if (data.state) updateAutoplayStatus(data.state);
   } catch {
     hero.dataset.live = 'false';
   }

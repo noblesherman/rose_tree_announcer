@@ -40,6 +40,8 @@ const base = new Map(cards.map((card) => [card.dataset.track, {
 
 let playback = null;
 let tracks = [];
+let nextUp = null;
+let autoplayEnabled = false;
 let revision = null;
 let today = null;
 let stateSignature = '';
@@ -148,10 +150,15 @@ function fitNames(list) {
 
 function applyState(state) {
   tracks = state.tracks;
+  nextUp = state.next_up;
+  autoplayEnabled = Boolean(state.autoplay_enabled);
   fitNames(tracks);
 
   const signature = JSON.stringify(state.tracks);
-  if (signature === stateSignature) return;
+  if (signature === stateSignature) {
+    paint();
+    return;
+  }
   stateSignature = signature;
 
   state.tracks.forEach((track) => {
@@ -285,6 +292,16 @@ function paintStrip() {
       eyebrow: 'System',
       title: 'Configuration needed',
       note: 'No announcements are loaded yet. Tell park staff.',
+    });
+    return;
+  }
+
+  if (autoplayEnabled && nextUp) {
+    setStrip({
+      state: 'idle',
+      eyebrow: 'Autoplay',
+      title: `Next: ${nextUp.name || 'Announcement'}`,
+      note: `Plays ${nextUp.today ? 'today at' : 'at'} ${nextUp.time_label}`,
     });
     return;
   }

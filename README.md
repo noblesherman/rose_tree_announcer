@@ -41,6 +41,7 @@ clickable. It never scrolls.
 - Pressing a button with no audio takes over the screen for five seconds with, for example,
   `BUTTON 2 / NO AUDIO LOADED`, then the normal status screen returns.
 - Status is never colour alone; every state is spelled out in words.
+- When autoplay is armed, the bottom strip says which announcement is next and when it will play.
 
 ### Playing and stopping
 
@@ -66,6 +67,9 @@ is connected in normal use.
   generate the voice or upload your own file. The exact spoken line previews as you type.
 - **Buttons** — rename buttons 1–5 and upload their audio. "Listen" plays a file in your
   browser so you can check it before the show.
+- **Autoplay** — choose a time and a button, then the Pi plays it automatically. The console
+  always shows the next announcement due to play; rules can run every day, on weekdays,
+  weekends, or on one specific date.
 
 Nothing reloads the page; saving shows a small confirmation and updates in place.
 
