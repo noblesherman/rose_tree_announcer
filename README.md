@@ -4,7 +4,7 @@ A Flask app that plays announcement audio through a Raspberry Pi. It has two int
 
 | Interface | URL | Who uses it |
 | --- | --- | --- |
-| **Device screen** | `/` | The 7" touchscreen on the Pi. Five big buttons, no login. |
+| **Device screen** | `/` | The 7" panel on the enclosure. Status only — the five physical buttons are the input. |
 | **Web console** | `/admin` | Staff on a phone or laptop. Passcode protected. |
 
 ## Run it
@@ -29,13 +29,35 @@ hostname -I              # Raspberry Pi
 
 ## The device screen
 
-Sized to fit any 7" panel from 800×480 to 1024×600 without scrolling.
+Built for the 800×480 panel that sits directly above the five physical buttons. There is no
+mouse, no cursor, and no touch input: the screen only reports state, and nothing on it is
+clickable. It never scrolls.
 
-- Five tiles, one per physical GPIO button. Button 4 is wide and shows tonight's band.
-- A tile dims when it has no audio yet; pressing it explains why instead of failing silently.
-- The bar along the bottom shows what is playing, with Stop beside it.
-- Everything stays in sync with the console within a second, so a schedule change made
-  on a phone shows up on the touchscreen without anyone touching the Pi.
+- Five cards left to right, one per physical button, each showing the button number, the
+  announcement name, and a status word: `READY`, `NO AUDIO`, `PLAYING`, or `ERROR`.
+- Card 4 is wider and shows tonight's band, `AUDIO NOT READY`, or `NO BAND SCHEDULED`.
+- While audio plays, that card and the bottom strip invert to a light background — legible
+  before the colour registers — and the strip prints `HOLD BUTTON n TO STOP` with elapsed time.
+- Pressing a button with no audio takes over the screen for five seconds with, for example,
+  `BUTTON 2 / NO AUDIO LOADED`, then the normal status screen returns.
+- Status is never colour alone; every state is spelled out in words.
+
+### Playing and stopping
+
+The five buttons are the only control, so both actions live on them:
+
+| Gesture | Effect |
+| --- | --- |
+| Tap a button | Plays that announcement (a press is acted on when released) |
+| Hold any button for 1 second | Stops whatever is playing |
+| Hold a button with nothing playing | Plays it, so a slow press still works |
+
+There is no on-screen Stop control, because there is nothing to click it with.
+
+### Keyboard (bench testing only)
+
+With a keyboard attached, number keys `1`–`5` play a button and `0` or `Esc` stops. No keyboard
+is connected in normal use.
 
 ## The web console
 
@@ -172,7 +194,7 @@ internet.
 ### GPIO buttons
 
 Each normally-open button connects between its BCM GPIO and GND. The app enables an internal
-pull-up and uses an 80 ms software debounce.
+pull-up, uses an 80 ms software debounce, and treats a 1 second hold as Stop.
 
 | Button | BCM GPIO | Physical pin |
 | --- | --- | --- |

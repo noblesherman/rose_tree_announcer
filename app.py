@@ -53,8 +53,13 @@ login_lock = threading.Lock()
 config_cache = {'key': None, 'cfg': None}
 login_attempts: dict[str, list[float]] = {}
 last_error = None
+last_error_at = 0.0
+last_error_track = None
 last_track = None
 last_track_name = None
+# The device screen has no pointer, so a failed button press has to announce
+# itself. Every press outcome is stamped here and the screen reads it back.
+last_event = {'id': 0, 'kind': 'idle', 'track': None, 'name': '', 'headline': '', 'message': '', 'at': 0.0}
 
 
 class GenerationError(RuntimeError):
@@ -479,21 +484,41 @@ def serialize_tracks(cfg, today_key):
         nightly = int(number) == NIGHTLY_TRACK_NUMBER
         filename = track.get('filename')
         subtitle = ''
+        band_name = ''
+        band_night = False
         if nightly:
-            if scheduled and scheduled.get('band_name'):
-                subtitle = scheduled['band_name']
+            band_night = bool(scheduled)
+            band_name = (scheduled or {}).get('band_name', '')
+            if band_name:
+                subtitle = band_name
             elif scheduled:
                 subtitle = 'Scheduled tonight'
             else:
                 subtitle = 'No band tonight'
             filename = (scheduled or {}).get('filename') or (None if scheduled else filename)
+        ready = bool(filename)
+        # The device screen prints these words as-is, so decide them once here.
+        if ready:
+            status, status_label = 'ready', 'Ready'
+        elif nightly and not band_night:
+            # The card already prints "No band scheduled" above this badge.
+            status, status_label = 'no_band', 'No band'
+        elif nightly:
+            status, status_label = 'no_audio', 'Audio not ready'
+        else:
+            status, status_label = 'no_audio', 'No audio'
         tracks.append({
             'number': number,
             'name': track['name'],
             'filename': track.get('filename'),
             'nightly': nightly,
             'subtitle': subtitle,
-            'ready': bool(filename),
+            'ready': ready,
+            'status': status,
+            'status_label': status_label,
+            'band_name': band_name,
+            'band_night': band_night,
+            'band_display': (band_name or ('Band not named' if band_night else 'No band scheduled')) if nightly else '',
         })
     return tracks
 
@@ -565,14 +590,41 @@ def full_state(cfg=None):
     return state
 
 
+def set_event(kind, track=None, name='', headline='', message=''):
+    """Stamp the outcome of the most recent press for the device screen."""
+    global last_event
+    last_event = {
+        'id': last_event['id'] + 1,
+        'kind': kind,
+        'track': str(track) if track is not None else None,
+        'name': name,
+        'headline': headline,
+        'message': message,
+        'at': time.monotonic(),
+    }
+
+
 def playback_state():
-    number = last_track if player.is_playing else None
+    playing = player.is_playing
+    number = last_track if playing else None
+    event = last_event
     return {
-        'is_playing': player.is_playing,
-        'track_number': number,
+        'is_playing': playing,
+        'track_number': str(number) if number is not None else None,
         'track_name': last_track_name if number else None,
         'elapsed': player.elapsed,
         'last_error': last_error,
+        'error_track': str(last_error_track) if last_error_track is not None else None,
+        'error_age': round(time.monotonic() - last_error_at, 1) if last_error else None,
+        'event': {
+            'id': event['id'],
+            'kind': event['kind'],
+            'track': event['track'],
+            'name': event['name'],
+            'headline': event['headline'],
+            'message': event['message'],
+            'age': round(time.monotonic() - event['at'], 1),
+        },
     }
 
 
@@ -750,7 +802,7 @@ def resolve_track(cfg, number, on_date=None):
 
 
 def play_track(number, source='web'):
-    global last_error, last_track, last_track_name
+    global last_error, last_error_at, last_error_track, last_track, last_track_name
     cfg = load_config()
     track = resolve_track(cfg, number)
     if not track:
@@ -758,24 +810,41 @@ def play_track(number, source='web'):
     name = track['name']
     if not track.get('filename'):
         if number == NIGHTLY_TRACK_NUMBER and track.get('date'):
-            message = "Tonight's band announcement has no audio yet."
+            message, headline = "Tonight's band announcement has no audio yet.", 'Audio not ready'
         elif number == NIGHTLY_TRACK_NUMBER:
-            message = 'No band is scheduled for tonight.'
+            message, headline = 'No band is scheduled for tonight.', 'No band scheduled'
         else:
-            message = f'Button {number} has no audio yet.'
+            message, headline = f'Button {number} has no audio yet.', 'No audio loaded'
+        set_event('no_audio', number, name, headline, message)
         record_history(name, source, False, message)
         return False, message
     try:
         player.play(MEDIA_DIR / track['filename'])
         last_track = number
         last_error = None
+        last_error_track = None
         last_track_name = name
+        set_event('playing', number, name, 'Now playing')
         record_history(name, source, True)
         return True, f'Playing {name}'
     except Exception as exc:
         last_error = str(exc)
+        last_error_at = time.monotonic()
+        last_error_track = number
+        set_event('error', number, name, 'Audio error', str(exc))
         record_history(name, source, False, str(exc))
         return False, str(exc)
+
+
+def stop_playback(source='web'):
+    """Stop whatever is playing. Returns True if something was actually cut off."""
+    was_playing = player.is_playing
+    name = last_track_name if was_playing else ''
+    player.stop()
+    if was_playing:
+        set_event('stopped', last_track, name, 'Stopped')
+        record_history(f'Stopped {name}'.strip(), source, True)
+    return was_playing
 
 
 # --------------------------------------------------------------------------
@@ -898,7 +967,7 @@ def api_play(number):
 
 @app.post('/api/stop')
 def api_stop():
-    player.stop()
+    stop_playback(source='web')
     return jsonify(success=True, message='Stopped', playback=playback_state())
 
 
@@ -909,6 +978,22 @@ def api_status():
         playback=playback_state(),
         state=serialize_state(),
     )
+
+
+@app.get('/api/pulse')
+def api_pulse():
+    """The device screen's once-a-second poll.
+
+    Playback only, plus a revision stamp. The screen re-reads the much larger
+    /api/status only when the stamp changes, so a physical press shows up in
+    about a second without re-serializing the schedule every time.
+    """
+    try:
+        stat = CONFIG_PATH.stat()
+        revision = f'{stat.st_mtime_ns}.{stat.st_size}'
+    except OSError:
+        revision = '0'
+    return jsonify(playback=playback_state(), revision=revision, day=date.today().isoformat())
 
 
 # Autoplay arming and volume affect the appliance, so they remain admin-only.
@@ -1115,6 +1200,22 @@ def debug_enabled():
     return os.getenv('ANNOUNCER_DEBUG', '').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def button_tap(number):
+    play_track(number, source='button')
+
+
+def button_hold(number):
+    """Holding a button is the stop control — there is no pointer on the panel.
+
+    With nothing playing a hold falls back to playing, so an operator who
+    simply presses slowly still gets their announcement.
+    """
+    if player.is_playing:
+        stop_playback(source='button')
+    else:
+        play_track(number, source='button')
+
+
 def start_workers():
     """Only the reloader's child process should own the GPIO pins and the clock."""
     if debug_enabled() and os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
@@ -1123,7 +1224,7 @@ def start_workers():
     # Restore the saved level on the appliance, but never hijack a dev machine's volume.
     if platform.system() != 'Darwin':
         set_system_volume(load_config()['volume'])
-    buttons = HardwareButtons(lambda n: play_track(n, source='button'))
+    buttons = HardwareButtons(button_tap, button_hold)
     clock = AutoPlayer()
     clock.start()
     return buttons, clock

@@ -9,73 +9,75 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='device.css') }}">
 </head>
 <body>
+  {% set nightly = state.tracks | selectattr('nightly') | first %}
+  <!--
+    Status display for the five physical buttons under the panel. There is no
+    pointer and no touch input: nothing on this page is clickable on purpose.
+  -->
   <div class="screen">
 
-    <header class="top">
-      <div class="clock tabular" id="clock">--:--</div>
-      <div class="top__day">
-        <b id="day">{{ state.today_pretty }}</b>
-        Rose Tree Park
+    <header class="head">
+      <div class="head__when">
+        <div class="head__clock tabular" id="clock">--:--</div>
+        <div class="head__date" id="date">{{ state.today_pretty }}</div>
       </div>
-      <div class="top__spacer"></div>
-      <div class="pill" id="tonight-pill" data-state="idle">
-        <i class="dot" id="tonight-dot" data-state="{{ 'ready' if state.tonight.filename else '' }}"></i>
-        <span id="tonight-text">
-          {%- if state.tonight.band_name -%}
-            Tonight · {{ state.tonight.band_name }}
-          {%- elif state.tonight.scheduled -%}
-            Tonight · band scheduled
-          {%- else -%}
-            No band tonight
-          {%- endif -%}
-        </span>
+      <div class="head__park">
+        <div class="head__name">Rose Tree Park</div>
+        <div class="head__band" id="head-band" data-status="{{ nightly.status }}">
+          <span class="head__band-label">Tonight</span>
+          <span class="head__band-name" id="head-band-name">{{ nightly.band_display }}</span>
+          {# With no band booked the name already says so; the badge would only repeat it. #}
+          <span class="head__band-status" id="head-band-status" {{ 'hidden' if nightly.status == 'no_band' }}>{{ nightly.status_label }}</span>
+        </div>
       </div>
-      <a class="gear" href="{{ url_for('admin') }}" aria-label="Open settings">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path>
-        </svg>
-      </a>
     </header>
 
-    <main class="grid">
+    <main class="cards">
       {% for track in state.tracks %}
-        <button
-          class="tile{{ ' tile--wide' if track.nightly }}"
+        <section
+          class="card{{ ' card--band' if track.nightly }}"
           data-track="{{ track.number }}"
-          data-ready="{{ 'true' if track.ready else 'false' }}"
-          data-active="false"
+          data-status="{{ track.status }}"
+          data-base="{{ track.status }}"
         >
-          <span class="tile__num">{{ track.number }}</span>
-          <span class="tile__name" data-field="name">{{ track.name }}</span>
-          <span class="tile__sub" data-field="sub">
-            {%- if track.nightly -%}
-              {{ track.subtitle }}
-            {%- elif track.ready -%}
-              Ready
-            {%- else -%}
-              No audio yet
-            {%- endif -%}
-          </span>
-        </button>
+          <div class="card__key">
+            <span class="card__key-word">Button</span>
+            <span class="card__key-num tabular">{{ track.number }}</span>
+          </div>
+          <div class="card__body">
+            {% if track.nightly %}
+              <div class="card__eyebrow" data-field="name">{{ track.name }}</div>
+              <div class="card__band" data-field="band">{{ track.band_display }}</div>
+            {% else %}
+              <div class="card__name" data-field="name">{{ track.name }}</div>
+            {% endif %}
+          </div>
+          <div class="card__status" data-field="status">{{ track.status_label }}</div>
+        </section>
       {% endfor %}
     </main>
 
-    <footer class="bottom">
-      <div class="now" id="now" data-state="idle">
-        <span class="now__bars"><span class="bars"><i></i><i></i><i></i><i></i></span></span>
-        <span class="now__text" id="now-text">Ready</span>
-        <span class="now__host">{{ address }}:5001</span>
+    <footer class="strip" id="strip" data-state="idle">
+      <div class="strip__text">
+        <div class="strip__eyebrow" id="strip-eyebrow">System</div>
+        <div class="strip__title" id="strip-title">Starting up</div>
+        <div class="strip__note" id="strip-note">One moment</div>
       </div>
-      <button class="stop" id="stop" data-live="false">
-        <span class="stop__glyph"></span>
-        Stop
-      </button>
+      <div class="strip__side">
+        <div class="strip__stop" id="strip-stop" hidden>Hold button 1 to stop</div>
+        <div class="strip__timer tabular" id="strip-timer" hidden>0:00</div>
+        <div class="strip__host" id="strip-host">announcer.local:5001 &middot; {{ address }}</div>
+      </div>
     </footer>
 
   </div>
 
-  <div class="flash" id="flash" role="status" aria-live="polite"></div>
+  <!-- Full-screen notice for a press that could not play. Clears itself. -->
+  <div class="notice" id="notice" data-kind="no_audio" hidden role="status" aria-live="assertive">
+    <div class="notice__where" id="notice-where">Button 2</div>
+    <div class="notice__what" id="notice-what">No audio loaded</div>
+    <div class="notice__hint" id="notice-hint">Press another button</div>
+  </div>
 
   <script src="{{ url_for('static', filename='device.js') }}"></script>
 </body>
