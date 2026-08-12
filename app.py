@@ -8,6 +8,7 @@ import os
 import platform
 import re
 import secrets
+import shutil
 import socket
 import threading
 import time
@@ -20,6 +21,8 @@ from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request, send_file, session, url_for
 from werkzeug.utils import secure_filename
+import qrcode
+from qrcode.image.svg import SvgPathImage
 
 from hardware import HardwareButtons
 from player import AudioPlayer, set_system_volume
@@ -466,6 +469,11 @@ def local_address():
         return '127.0.0.1'
 
 
+def admin_console_url():
+    """The stable local-network address printed by the Pi's QR code."""
+    return 'http://announcer.local:5001/admin'
+
+
 # --------------------------------------------------------------------------
 # Serialized state shared by both interfaces
 # --------------------------------------------------------------------------
@@ -713,6 +721,48 @@ def _replace_schedule_file(entry, new_filename, new_source, cleanup_old_generate
         _delete_media_file(old_filename)
 
 
+def _copied_schedule_filename(day, filename):
+    """Give a copied night its own file so either night can be edited or removed."""
+    source = Path(filename)
+    stem = secure_filename(source.stem).lower() or 'announcement'
+    extension = source.suffix.lower()
+    candidate = f'band_{day}_{stem}_copy{extension}'
+    counter = 2
+    while (MEDIA_DIR / candidate).exists():
+        candidate = f'band_{day}_{stem}_copy-{counter}{extension}'
+        counter += 1
+    return candidate
+
+
+def copy_schedule_entry(source_day, destination_day):
+    """Clone one scheduled night without sharing media files between the dates."""
+    cfg = load_config()
+    schedule = cfg.setdefault('nightly_band_schedule', {})
+    source = _normalize_schedule_entry(schedule.get(source_day, {}))
+    if source_day not in schedule:
+        raise GenerationError('That band night no longer exists.')
+    if destination_day in schedule:
+        raise GenerationError('That date already has a band night. Open it to make changes instead.')
+
+    copied = {'band_name': source['band_name'], 'filename': None, 'source': None}
+    if source['filename']:
+        source_path = _media_path_for(source['filename'])
+        if source_path is None or not source_path.is_file():
+            raise GenerationError('The original audio file is missing, so this night cannot be copied.')
+        filename = _copied_schedule_filename(destination_day, source['filename'])
+        try:
+            shutil.copy2(source_path, MEDIA_DIR / filename)
+        except OSError as exc:
+            raise GenerationError('The audio file could not be copied. Check available storage and try again.') from exc
+        copied['filename'] = filename
+        copied['source'] = source['source']
+
+    schedule[destination_day] = copied
+    cfg['nightly_band_schedule'] = {key: schedule[key] for key in sorted(schedule)}
+    save_config(cfg)
+    return copied
+
+
 def generate_band_announcement(day, band_name):
     config_error = minimax_config_error()
     if config_error:
@@ -903,7 +953,14 @@ def _save_upload(file_storage, final_name):
 @app.get('/')
 def device():
     state = serialize_state()
-    return render_template('device.html', state=state, address=local_address())
+    return render_template('device.html', state=state)
+
+
+@app.get('/admin-qr.svg')
+def admin_qr():
+    """Serve a crisp, self-contained QR code for the staff console."""
+    image = qrcode.make(admin_console_url(), image_factory=SvgPathImage, border=2)
+    return app.response_class(image.to_string(), mimetype='image/svg+xml')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -1118,6 +1175,29 @@ def api_generate():
     cfg['nightly_band_schedule'] = {key: schedule[key] for key in sorted(schedule)}
     save_config(cfg)
     return jsonify(success=True, message=f'Voice ready for {band_name}', state=full_state(), day=day)
+
+
+@app.post('/api/schedule/copy')
+@login_required
+def api_copy_schedule():
+    payload = request.get_json(silent=True) or {}
+    source_day = str(payload.get('source_date', '')).strip()
+    destination_day = str(payload.get('destination_date', '')).strip()
+    if _parse_date_key(source_day) is None or _parse_date_key(destination_day) is None:
+        return jsonify(success=False, message='Pick valid dates to copy the night.'), 400
+    if source_day == destination_day:
+        return jsonify(success=False, message='Choose a different date for the copy.'), 400
+    try:
+        copied = copy_schedule_entry(source_day, destination_day)
+    except GenerationError as exc:
+        return jsonify(success=False, message=str(exc)), 400
+    detail = 'with its audio' if copied['filename'] else 'without audio'
+    return jsonify(
+        success=True,
+        message=f'Copied to {_pretty_day(destination_day)} {detail}.',
+        state=full_state(),
+        day=destination_day,
+    )
 
 
 @app.post('/api/autoplay')

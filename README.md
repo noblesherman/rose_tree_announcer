@@ -18,7 +18,7 @@ python app.py
 ```
 
 Open `http://127.0.0.1:5001` for the device screen, `http://127.0.0.1:5001/admin` for the console.
-The device screen shows its own network address in the bottom bar, so staff know where to browse.
+The device screen shows a QR code in the bottom bar; scan it from the same Wi-Fi network to open the staff console.
 
 To reach it from a phone on the same Wi-Fi:
 
@@ -63,8 +63,11 @@ is connected in normal use.
 ## The web console
 
 - **Tonight** — the band playing tonight, with Play and Stop.
+- **Speaker volume** — set the Raspberry Pi speaker level from the console; the chosen level is saved for the next restart.
 - **Band nights** — one row per date. Tap a row to open it, type the band name, then either
-  generate the voice or upload your own file. The exact spoken line previews as you type.
+  generate the voice or upload your own file. The exact spoken line previews as you type. To reuse a
+  night, choose a new date under **Copy this night to**; it makes an independent copy of the audio so
+  either date can be edited or removed safely.
 - **Buttons** — rename buttons 1–5 and upload their audio. "Listen" plays a file in your
   browser so you can check it before the show.
 - **Autoplay** — choose a time and a button, then the Pi plays it automatically. The console

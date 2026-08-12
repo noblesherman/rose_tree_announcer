@@ -22,7 +22,7 @@ const stripTitle = byId('strip-title');
 const stripNote = byId('strip-note');
 const stripStop = byId('strip-stop');
 const stripTimer = byId('strip-timer');
-const stripHost = byId('strip-host');
+const stripQr = byId('strip-qr');
 const noticeEl = byId('notice');
 const noticeWhere = byId('notice-where');
 const noticeWhat = byId('notice-what');
@@ -247,7 +247,7 @@ function setStrip({ state, eyebrow, title, note, stop, timer }) {
   stripStop.hidden = !stop;
   if (stop) setText(stripStop, stop);
   stripTimer.hidden = !timer;
-  stripHost.hidden = Boolean(stop);
+  stripQr.hidden = Boolean(stop);
   if (timer) paintTimer();
 }
 

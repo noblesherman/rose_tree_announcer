@@ -7,8 +7,9 @@
   /* Higher contrast than the shared console palette: this panel is read from
      two to five feet away, outdoors, at night. */
   --bg: #0a0b0d;
-  --card: #16181c;
-  --card-line: #333941;
+  --card: #15181d;
+  --card-raised: #1a1e25;
+  --card-line: #343b46;
   --text: #ffffff;
   --text-2: #c3cad3;
   --text-3: #8b939e;
@@ -52,8 +53,11 @@ body {
   inset: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem 0.875rem;
+  background:
+    radial-gradient(55rem 20rem at 50% 100%, rgba(57, 74, 104, 0.18), transparent 62%),
+    var(--bg);
 }
 
 /* Header ----------------------------------------------------------------- */
@@ -63,7 +67,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  height: 4.5rem;
+  height: 4.25rem;
   flex: none;
 }
 
@@ -74,7 +78,7 @@ body {
 }
 
 .head__clock {
-  font-size: 2.875rem;
+  font-size: 2.65rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -94,7 +98,7 @@ body {
 }
 
 .head__name {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -122,7 +126,7 @@ body {
 .head__band-name {
   min-width: 0;
   max-width: 22rem;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   line-height: 1.2;
   overflow: hidden;
@@ -167,17 +171,19 @@ body {
   flex-direction: column;
   flex: 1 1 0;
   min-width: 0;
-  padding: 0.75rem 0.625rem;
-  border: 2px solid var(--card-line);
-  border-radius: 0.875rem;
-  background: var(--card);
+  position: relative;
+  padding: 0.7rem 0.55rem 0.6rem;
+  border: 1px solid var(--card-line);
+  border-radius: 0.75rem;
+  background: linear-gradient(150deg, var(--card-raised), var(--card));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
   text-align: center;
   overflow: hidden;
 }
 
 /* Tonight's band needs room for a real band name. */
 .card--band {
-  flex-grow: 1.85;
+  flex-grow: 1.9;
 }
 
 .card__key {
@@ -187,16 +193,16 @@ body {
 .card__key-word {
   display: block;
   color: var(--text-3);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   line-height: 1.2;
 }
 
 .card__key-num {
   display: block;
-  font-size: 3.25rem;
+  font-size: 3rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -207,7 +213,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.125rem;
+  gap: 0.25rem;
   min-height: 0;
   padding: 0.25rem 0;
   overflow: hidden;
@@ -224,22 +230,23 @@ body {
   font-weight: 700;
   line-height: 1.15;
   overflow: hidden;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .card__name {
-  font-size: 1.375rem;
+  font-size: 1.2rem;
 }
 
 /* A band name is worth more lines than an announcement name. */
 .card__band {
   -webkit-line-clamp: 5;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
 }
 
 .card__eyebrow {
   color: var(--text-3);
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -254,12 +261,12 @@ body {
   display: grid;
   place-items: center;
   flex: none;
-  height: 2.5rem;
-  padding: 0 0.25rem;
-  border-radius: 0.5rem;
+  height: 2.15rem;
+  padding: 0 0.2rem;
+  border-radius: 0.375rem;
   background: var(--none-bg);
   color: var(--none-fg);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -290,8 +297,8 @@ body {
 
 /* Playing: the card inverts, so it reads even before the colour registers. */
 .card[data-status="playing"] {
-  border-color: var(--live-bg);
-  background: var(--live-bg);
+  border-color: #fff7e9;
+  background: linear-gradient(150deg, #fffaf2, var(--live-bg));
   color: var(--live-fg);
 }
 
@@ -311,13 +318,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.25rem;
+  gap: 1rem;
   flex: none;
-  height: 6.75rem;
-  padding: 0.5rem 1.25rem;
-  border: 2px solid var(--card-line);
-  border-radius: 0.875rem;
-  background: var(--card);
+  height: 6.15rem;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid var(--card-line);
+  border-radius: 0.75rem;
+  background: linear-gradient(100deg, var(--card-raised), var(--card));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.025);
 }
 
 .strip__text {
@@ -327,7 +335,7 @@ body {
 
 .strip__eyebrow {
   color: var(--text-3);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -335,7 +343,7 @@ body {
 }
 
 .strip__title {
-  font-size: 2.25rem;
+  font-size: 1.9rem;
   font-weight: 800;
   line-height: 1.1;
   overflow: hidden;
@@ -345,7 +353,7 @@ body {
 
 .strip__note {
   color: var(--text-2);
-  font-size: 1rem;
+  font-size: 0.875rem;
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -376,15 +384,17 @@ body {
   font-weight: 700;
 }
 
-.strip__host {
-  color: var(--text-3);
-  font-size: 0.75rem;
-  white-space: nowrap;
+.strip__qr {
+  width: 4.75rem;
+  height: 4.75rem;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  background: #fff;
 }
 
 .strip[data-state="playing"] {
-  border-color: var(--live-bg);
-  background: var(--live-bg);
+  border-color: #fff7e9;
+  background: linear-gradient(100deg, #fffaf2, var(--live-bg));
   color: var(--live-fg);
 }
 
@@ -408,6 +418,14 @@ body {
 .strip[data-state="setup"],
 .strip[data-state="offline"] {
   border-color: var(--wait-bg);
+}
+
+.strip[data-state="idle"] {
+  border-color: rgba(102, 130, 177, 0.56);
+}
+
+.strip[data-state="idle"] .strip__eyebrow {
+  color: #9db9e5;
 }
 
 .strip[data-state="setup"] .strip__eyebrow,

@@ -51,6 +51,17 @@
       </div>
     </section>
 
+    <section class="volume" aria-labelledby="volume-title">
+      <div class="volume__copy">
+        <h2 id="volume-title">Speaker volume</h2>
+        <p>Changes the Raspberry Pi’s speaker level.</p>
+      </div>
+      <div class="volume__control">
+        <input id="volume" type="range" min="0" max="100" step="1" aria-describedby="volume-value">
+        <output id="volume-value" for="volume">75%</output>
+      </div>
+    </section>
+
     <section class="section autoplay" id="autoplay">
       <div class="section__head">
         <h2>Autoplay</h2>

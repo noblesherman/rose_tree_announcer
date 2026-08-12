@@ -25,6 +25,8 @@ const autoplayTrack = document.getElementById('autoplay-track');
 const autoplayRepeat = document.getElementById('autoplay-repeat');
 const autoplayDateField = document.getElementById('autoplay-date-field');
 const autoplayDate = document.getElementById('autoplay-date');
+const volume = document.getElementById('volume');
+const volumeValue = document.getElementById('volume-value');
 const preview = new Audio();
 
 /* Tiny DOM helper -------------------------------------------------------- */
@@ -287,13 +289,49 @@ function nightDetail(night, isDraft) {
         },
       });
 
+  const copyDate = el('input', {
+    class: 'input',
+    type: 'date',
+    min: nextDateAfter(night.day),
+    value: nextDateAfter(night.day),
+  });
+  const copy = !isDraft
+    ? el('button', {
+        class: 'btn btn--quiet',
+        type: 'button',
+        text: 'Copy to date',
+        onclick: async (event) => {
+          const data = await run(event.currentTarget, '/api/schedule/copy', {
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source_date: night.day, destination_date: copyDate.value }),
+          });
+          if (data.success) {
+            openKey = data.day;
+            render();
+            document.querySelector(`.row[data-key="${data.day}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        },
+      })
+    : null;
+
   return [
     dateInput ? el('div', { class: 'field' }, [el('label', { text: 'Date' }), dateInput]) : null,
     el('div', { class: 'field' }, [el('label', { text: 'Band' }), nameInput]),
     line,
     file.node,
+    !isDraft ? el('div', { class: 'copy-night' }, [
+      el('div', { class: 'field' }, [el('label', { text: 'Copy this night to' }), copyDate]),
+      copy,
+      el('p', { class: 'copy-night__hint', text: night.filename ? 'The band name and a separate copy of this audio will be ready to edit.' : 'The band name will be copied. Add audio when you are ready.' }),
+    ]) : null,
     el('div', { class: 'actions' }, [generate, save, el('span', { class: 'actions__gap' }), remove]),
   ].filter(Boolean);
+}
+
+function nextDateAfter(day) {
+  const parsed = new Date(`${day}T12:00:00`);
+  parsed.setDate(parsed.getDate() + 1);
+  return parsed.toISOString().slice(0, 10);
 }
 
 function finishNight(day) {
@@ -492,9 +530,16 @@ function applyState(next) {
 
 function render() {
   renderHero();
+  renderVolume();
   renderAutoplay();
   renderSchedule();
   renderTracks();
+}
+
+function renderVolume() {
+  volume.value = state.volume;
+  volumeValue.value = `${state.volume}%`;
+  volumeValue.textContent = `${state.volume}%`;
 }
 
 document.getElementById('add-night').addEventListener('click', () => {
@@ -506,6 +551,27 @@ document.getElementById('add-night').addEventListener('click', () => {
 
 heroPlay.addEventListener('click', (event) => run(event.currentTarget, `/api/play/${state.nightly_number}`));
 heroStop.addEventListener('click', (event) => run(event.currentTarget, '/api/stop'));
+
+volume.addEventListener('input', () => {
+  volumeValue.value = `${volume.value}%`;
+  volumeValue.textContent = `${volume.value}%`;
+});
+
+volume.addEventListener('change', async () => {
+  const previous = state.volume;
+  const data = await api('/api/volume', {
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ volume: Number(volume.value) }),
+  });
+  toast(data.message, data.success ? 'info' : 'error');
+  if (data.success && data.state) {
+    state.volume = data.state.volume;
+    renderVolume();
+  } else {
+    state.volume = previous;
+    renderVolume();
+  }
+});
 
 autoplayEnabled.addEventListener('change', async (event) => {
   const data = await api('/api/autoplay/toggle', {

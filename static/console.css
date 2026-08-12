@@ -127,6 +127,60 @@ body {
   flex-wrap: wrap;
 }
 
+/* Speaker volume --------------------------------------------------------- */
+
+.volume {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 12px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.volume__copy {
+  flex: 1;
+}
+
+.volume h2 {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.volume p,
+.copy-night__hint {
+  margin: 3px 0 0;
+  color: var(--text-faint);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.volume__control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(50%, 260px);
+}
+
+.volume input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.volume output {
+  width: 38px;
+  color: var(--accent);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /* Buttons ---------------------------------------------------------------- */
 
 .btn {
@@ -566,6 +620,21 @@ select.input {
   flex: 1;
 }
 
+.copy-night {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.copy-night__hint {
+  grid-column: 1 / -1;
+}
+
 /* Toasts ----------------------------------------------------------------- */
 
 .toasts {
@@ -686,5 +755,15 @@ select.input {
 
   .hero__band {
     font-size: 22px;
+  }
+
+  .volume {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .volume__control {
+    width: 100%;
   }
 }

@@ -66,7 +66,7 @@
       <div class="strip__side">
         <div class="strip__stop" id="strip-stop" hidden>Hold button 1 to stop</div>
         <div class="strip__timer tabular" id="strip-timer" hidden>0:00</div>
-        <div class="strip__host" id="strip-host">announcer.local:5001 &middot; {{ address }}</div>
+        <img class="strip__qr" id="strip-qr" src="{{ url_for('admin_qr') }}" alt="Scan to open the staff console">
       </div>
     </footer>
 
